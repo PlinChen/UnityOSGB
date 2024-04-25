@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -9,6 +9,7 @@ namespace osgEx
     {
         private int frameCount;
         private bool needUpdateCalculateFrustumPlanes;
+        private Camera mainCamera;
         private Plane[] m_calculateFrustumPlanes;
         public Plane[] CalculateFrustumPlanes
         {
@@ -16,7 +17,7 @@ namespace osgEx
             {
                 if (needUpdateCalculateFrustumPlanes && frameCount < Time.frameCount)
                 {
-                    GeometryUtility.CalculateFrustumPlanes(Camera.main, m_calculateFrustumPlanes);
+                    GeometryUtility.CalculateFrustumPlanes(mainCamera, m_calculateFrustumPlanes);
                     frameCount = Time.frameCount;
                     needUpdateCalculateFrustumPlanes = false;
                 }
@@ -46,18 +47,20 @@ namespace osgEx
         public float updateIntervalTime = 1;
         /// <summary> 计算LOD的参考比率 </summary> 
         public float rangeValueRatio = 1;
+
         public bool needUpdatePaged { get => m_cameraStopTime > updateIntervalTime; }
         protected override void __Awake()
         {
             base.__Awake();
             m_calculateFrustumPlanes = new Plane[6];
-            Camera.main.GetOrAddComponent<TransformEx>().onChanged += onCameraMove;
+            mainCamera = Camera.main;
+            mainCamera.GetOrAddComponent<TransformEx>().onChanged += onCameraMove;
         }
         protected override void __OnDestroy()
         {
-            if (Camera.main != null)
+            if (mainCamera != null)
             {
-                Camera.main.GetOrAddComponent<TransformEx>().onChanged -= onCameraMove;
+                mainCamera.GetOrAddComponent<TransformEx>().onChanged -= onCameraMove;
             }
             base.__OnDestroy();
         }
