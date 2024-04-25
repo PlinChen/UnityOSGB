@@ -62,15 +62,7 @@ namespace osgEx
         {
             int strLength = reader.ReadInt32();
             byte[] bytes = reader.ReadBytes(strLength);
-            using (MemoryStream stream = new MemoryStream(bytes))
-            {
-                using (BinaryReader strReader = new BinaryReader(stream))
-                {
-                    char[] compressor = strReader.ReadChars(strLength);
-                    string str = new string(compressor);
-                    return str;
-                }
-            }
+            return System.Text.Encoding.ASCII.GetString(bytes);
         }
         public static long ReadBracket(BinaryReader reader, osg_Reader owner)
         {
@@ -109,17 +101,14 @@ namespace osgEx
                 owner._sharedObjects[id] = obj;
                 return obj;
             }
-            else if (blockSize != -1)
+            if (blockSize != -1)
             {
-                reader.BaseStream.Position += (blockSize - 4); //¿é×Ü´óĞ¡-ÃèÊöµÄ´óĞ¡-idµÄ´óĞ¡
-                Debug.Log(string.Format("Î´ÊµÏÖ{0}Àà,³¢ÊÔÌø¹ı{1}×Ö½Ú³¤¶È ", className, (blockSize - 4)));
+                reader.BaseStream.Position += (blockSize - 4); //å—æ€»å¤§å°-æè¿°çš„å¤§å°-idçš„å¤§å°
+                Debug.Log($"æœªå®ç°{className}ç±»,å°è¯•è·³è¿‡{(blockSize - 4)}å­—èŠ‚é•¿åº¦ ");
                 owner._sharedObjects[id] = null;
                 return null;
             }
-            else
-            {
-                throw new Exception(string.Format("Î´ÊµÏÖ{0}Àà ", className));
-            }
+            throw new Exception($"æœªå®ç°{className}ç±» ");
         }
 
         public string name;
