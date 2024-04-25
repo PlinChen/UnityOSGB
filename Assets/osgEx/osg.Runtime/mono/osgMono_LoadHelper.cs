@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.IO;
 using UnityEngine;
 
@@ -60,28 +60,33 @@ namespace osgEx
         public static GameObject CreateGameObject(osg_Node node, GameObject parent = null)
         {
             GameObject osgbGameObject = new GameObject();
-            if (parent != null)
+            Transform osgbTransform = osgbGameObject.transform;
+            if (parent)
             {
-                osgbGameObject.transform.parent = parent.transform;
-                osgbGameObject.transform.localPosition = Vector3.zero;
-                osgbGameObject.transform.localRotation = Quaternion.identity;
-                osgbGameObject.transform.localScale = Vector3.one;
+                osgbTransform.parent = parent.transform;
+                osgbTransform.localPosition = Vector3.zero;
+                osgbTransform.localRotation = Quaternion.identity;
+                osgbTransform.localScale = Vector3.one;
             }
             if (node is osg_Group group)
             {
                 if (node is osg_MatrixTransform matrix)
                 {
-                    osgbGameObject.transform.localPosition = matrix.localPosition;
-                    osgbGameObject.transform.localRotation = matrix.localRotation;
-                    osgbGameObject.transform.localScale = matrix.localScale;
+                    osgbTransform = osgbGameObject.transform;
+                    osgbTransform.localPosition = matrix.localPosition;
+                    osgbTransform.localRotation = matrix.localRotation;
+                    osgbTransform.localScale = matrix.localScale;
                 }
-                for (int i = 0; i < group.children.Length; i++)
+                foreach (var child in group.children)
                 {
-                    CreateGameObject(group.children[i], osgbGameObject);
+                    child.owner = node.owner;
+                    CreateGameObject(child, osgbGameObject);
                 }
                 osgbGameObject.name = "OSGB_Group";
+                return osgbGameObject;
             }
-            else if (node is osg_PagedLOD pagedLOD)
+
+            if (node is osg_PagedLOD pagedLOD)
             {
                 osgbGameObject.AddComponent<osgMono_PagedLOD>().Generate(pagedLOD);
                 osgbGameObject.name = "OSGB_PagedLOD";
