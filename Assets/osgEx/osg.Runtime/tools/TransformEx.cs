@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using UnityEngine;
 
 namespace osgEx
@@ -14,6 +13,12 @@ namespace osgEx
             this.hideFlags = HideFlags.HideInInspector;
             this.thisTransform = transform;
         }
+
+        private void OnDisable()
+        {
+            hasChanged = false;
+        }
+
         private void Update()
         {
             hasChanged = thisTransform.hasChanged;
@@ -22,18 +27,6 @@ namespace osgEx
                 onChanged?.Invoke();
                 thisTransform.hasChanged = false;
             } 
-        }
-        IEnumerator EndOfF()
-        {
-            while (true)
-            {
-                yield return new WaitForEndOfFrame();
-
-            }
-        }
-        private void LateUpdate()
-        {
-
         }
     }
 }
