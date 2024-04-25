@@ -56,6 +56,8 @@ namespace osgEx.Tools
         private bool isRotating { get => Input.GetMouseButton(1); }
         private bool isRotateAround { get => Input.GetMouseButton(1) && Input.GetKey(KeyCode.LeftControl); }
 
+        private Camera mainCamera;
+        private Transform cameraTransform;
 #endif
 
         //拖拽点
@@ -82,7 +84,8 @@ namespace osgEx.Tools
             m_map.Enable();
 #else
 #endif
-
+            mainCamera ??= Camera.main;
+            cameraTransform = mainCamera!.transform;
         }
         /// <summary>
         /// 拖拽控制
@@ -93,21 +96,18 @@ namespace osgEx.Tools
             if (isDragging && !positionControl)
             {
                 Vector2 value = dragPositionValue;
-                Ray ray = Camera.main.ScreenPointToRay(value);
-                if (m_dragTargetPosition == null)
+                var ray = mainCamera.ScreenPointToRay(value);
+                if (m_dragTargetPosition == null && Physics.Raycast(ray, out var hit))
                 {
-                    if (Physics.Raycast(ray, out RaycastHit hit))
-                    {
-                        m_dragTargetPosition = hit.point;
-                    }
+                    m_dragTargetPosition = hit.point;
                 }
                 if (m_dragTargetPosition != null)
                 {
-                    Plane plane = new Plane(Camera.main.transform.forward * -1, (Vector3)m_dragTargetPosition);
-                    if (plane.Raycast(ray, out float dis))
+                    var plane = new Plane(cameraTransform.forward * -1, (Vector3)m_dragTargetPosition);
+                    if (plane.Raycast(ray, out var dis))
                     {
-                        Vector3 rayPlaneCast = ray.GetPoint(dis);
-                        Vector3 position = (Vector3)m_dragTargetPosition - rayPlaneCast + Camera.main.transform.position;
+                        var rayPlaneCast = ray.GetPoint(dis);
+                        var position = (Vector3)m_dragTargetPosition - rayPlaneCast + cameraTransform.position;
                         transform.position = position;
                     }
                     positionControl = true;
@@ -133,8 +133,7 @@ namespace osgEx.Tools
                 {
                     distance = hit.distance < 20 ? 20 : hit.distance;
                 }
-                Vector3 position = value * transform.forward * distance * Time.fixedDeltaTime + transform.position;
-                transform.position = position;
+                transform.position += transform.forward * (value * distance * Time.fixedDeltaTime);
                 positionControl = true;
             }
         }
