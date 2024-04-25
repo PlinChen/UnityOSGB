@@ -34,8 +34,8 @@ namespace osgEx.Editor
             {
                 if (shader.GetPropertyType(i) == propertyType)
                 {
-                    var name = shader.GetPropertyName(i);
-                    nameList.Add(name);
+                    var propertyName = shader.GetPropertyName(i);
+                    nameList.Add(propertyName);
                 }
             }
             var nameArray = nameList.ToArray();
