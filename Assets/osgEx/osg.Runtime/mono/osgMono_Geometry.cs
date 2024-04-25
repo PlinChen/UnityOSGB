@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+using System;
+using System.Linq;
+using UnityEngine;
 
 namespace osgEx
 {
@@ -13,13 +15,15 @@ namespace osgEx
         public MeshCollider meshCollider { get { if (m_meshCollider == null) { m_meshCollider = this.GetOrAddComponent<MeshCollider>(); } return m_meshCollider; } }
         private Mesh m_mesh;
         private Texture2D m_mainTexture;
+        
+        private static osgManager osgManagerInstance;
         public override void Generate(osg_Geometry osgGeometry)
         {
             meshRenderer.material = osgManager.Instance.materialData.Material;
             if (meshRenderer.material != null)
             {
                 var m_materialPropertyBlock = new MaterialPropertyBlock();
-                m_mainTexture = (osgGeometry.stateSet?.textures?[0] as osg_Texture2D).Generate();
+                m_mainTexture = (osgGeometry.stateSet?.textures?[0] as osg_Texture2D)?.Generate();
                 if (!string.IsNullOrWhiteSpace(osgManager.Instance.materialData.MainTexProperty))
                 {
                     m_materialPropertyBlock.SetTexture(osgManager.Instance.materialData.MainTexProperty, m_mainTexture);
@@ -30,14 +34,28 @@ namespace osgEx
                 var specular = osgGeometry.stateSet?.materials?[0].specular;
                 meshRenderer.SetPropertyBlock(m_materialPropertyBlock);
             }
-            if (m_mesh != null) { Destroy(m_mesh); m_mesh = null; }
-            m_mesh = new Mesh();
-            m_mesh.vertices = osgGeometry.vertexs;
-            m_mesh.triangles = osgGeometry.indices;
-            m_mesh.uv = osgGeometry.uv[0];
+            var tempMesh = new Mesh();
+            tempMesh.vertices = osgGeometry.vertexs.Select(v=>new Vector3(-v.x, v.y, v.z)).ToArray();
+            var triangles = new int[osgGeometry.indices.Length];
+            for (var i = 0; i < triangles.Length; i += 3 )
+            {
+                triangles[i] = osgGeometry.indices[i];
+                triangles[i + 1] = osgGeometry.indices[i + 2];
+                triangles[i + 2] = osgGeometry.indices[i + 1];
+            }
+            tempMesh.triangles = triangles;
+            tempMesh.uv = osgGeometry.uv[0];
+            
+            if (m_mesh) { osgManagerInstance.DestroyObject(m_mesh); m_mesh = null; }
+            m_mesh = tempMesh;
+
             meshFilter.sharedMesh = m_mesh;
+            if ((osgManagerInstance ??= osgManager.Instance).colliderEnabled)
+            {
+                meshCollider.convex = true;
             meshCollider.sharedMesh = m_mesh;
-            meshCollider.enabled = osgManager.Instance.colliderEnabled;
+                meshCollider.enabled = true;
+            }
 
             if (osgGeometry.normals != null)
             {
